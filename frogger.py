@@ -1,4 +1,6 @@
 import pygame
+from pygame.math import Vector2
+from decimal import Decimal
 from constants import SQUARE_SIZE, HEIGHT, WIDTH, WATER_ZONE_X, WATER_ZONE_Y
 from enum import IntEnum
 """
@@ -46,10 +48,10 @@ class Frogger(pygame.sprite.Sprite):
         self.jump_image = pygame.image.load(
             "Frogger_main_skin/skin_Classic_base2.png")
         self.rect = self.image.get_rect()
-        self.rect.x = 7 * SQUARE_SIZE  # 7 tiles from the left of the screen
-        self.rect.y = HEIGHT - SQUARE_SIZE * 2  # 2 tiles from the bottom of the screen
-        self.x = self.rect.x
-        self.y = self.rect.y
+        # 7 tiles from the left of the screen and 2 tiles from the bottom
+        self.position = Vector2(Decimal(7 * SQUARE_SIZE), Decimal(HEIGHT - SQUARE_SIZE * 2))
+        self.rect.x = self.position.x
+        self.rect.y = self.position.y
 
         # For jumping animation
         self.just_jumped = False
@@ -58,7 +60,7 @@ class Frogger(pygame.sprite.Sprite):
         # For bullets
         self.bullets = False
 
-    def collision_detection(self, group, dt):
+    def collision_detection(self, group, deltaTime):
         """
         Simplified down the collision code, and decreased the unnecessary repeat calls for collider checking.         Now it uses the direction
         stored inside the sprite to decide which direction it should move.
@@ -69,7 +71,8 @@ class Frogger(pygame.sprite.Sprite):
         collision_result = pygame.sprite.spritecollideany(self, group)
         if collision_result and collision_result.can_hitchhike():
             direction = 1 if collision_result.direction else -1
-            self.rect.x += collision_result.speed * direction
+            self.position.x += collision_result.speed * direction * deltaTime
+            self.rect.x = round(self.position.x)
             self.hitchhiking = True
         elif self.at_end:
             self.hitchhiking = True
@@ -112,31 +115,27 @@ class Frogger(pygame.sprite.Sprite):
                 
             if event.type == pygame.MOUSEBUTTONDOWN:
                 shoot = 1
-
             if event.type != pygame.KEYDOWN:
                 continue
 
             if event.key == pygame.K_UP or event.key == ord('w'):
                 y -= 1
-
             elif event.key == pygame.K_LEFT or event.key == ord('a'):
                 x -= 1
-
             elif event.key == pygame.K_DOWN or event.key == ord('s'):
                 y += 1
-
             elif event.key == pygame.K_RIGHT or event.key == ord('d'):
                 x += 1
 
         return x, y, shoot
                 
     
-    def movement(self):
+    def movement(self, game_over, deltaTime):
         x, y, shoot = self.get_input()
         
         # UP
         if y < 0:
-            self.rect.y -= self.vel
+            self.position.y -= self.vel
             self.angle = DIR_FACE.UP
             self.just_jumped = True
             if self.rect.y < SQUARE_SIZE:
@@ -145,7 +144,7 @@ class Frogger(pygame.sprite.Sprite):
 
         # DOWN
         elif y > 0:
-            self.rect.y += self.vel
+            self.position.y += self.vel
             self.angle = DIR_FACE.DOWN
             self.just_jumped = True
             if self.rect.y > HEIGHT - 2 * (SQUARE_SIZE):
@@ -153,7 +152,7 @@ class Frogger(pygame.sprite.Sprite):
                 
         # LEFT
         if x < 0:
-            self.rect.x -= self.vel
+            self.position.x -= self.vel
             self.angle = DIR_FACE.LEFT
             self.just_jumped = True
             if self.rect.x < 0:
@@ -161,21 +160,25 @@ class Frogger(pygame.sprite.Sprite):
         
         # RIGHT
         elif x > 0:
-            self.rect.x += self.vel
+            self.position.x += self.vel
             self.angle = DIR_FACE.RIGHT
             self.just_jumped = True
             if self.rect.x > WIDTH - SQUARE_SIZE:
                 self.rect.x = WIDTH - SQUARE_SIZE
-
-        if shoot:
+              
+        self.rect.x = round(self.position.x)
+        self.rect.y = round(self.position.y)
+        if shoot and not game_over:
             print("I am out of ammo")
 
             self.bullet = self.create_bullet()
             self.bullets = True
 
     def death_reset(self):
-        self.rect.x = 7 * SQUARE_SIZE  # 7 tiles from the left of the screen
-        self.rect.y = HEIGHT - SQUARE_SIZE * 2  # 2 tiles from the bottom of the screen self.rect.x = 7 * constants.SQUARE_SIZE # 7 tiles from the left of the screen
+        self.position = Vector2(Decimal(7 * SQUARE_SIZE), Decimal(HEIGHT - SQUARE_SIZE * 2))
+        self.rect.x = self.position.x
+        self.rect.y = self.position.y  # 7 tiles from the left of the screen
+      # 2 tiles from the bottom of the screen self.rect.x = 7 * constants.SQUARE_SIZE # 7 tiles from the left of the screen
 
     def draw(self, screen):
         #pygame.draw.rect(screen, (0, 255, 0), pygame.Rect(self.x, self.y + 5, 30, 30)) # Temporary - will change after image for Frogger
@@ -225,8 +228,6 @@ class Bullet(pygame.sprite.Sprite):
 
         self.rect.x = pos_x + 20
         self.rect.y = pos_y + 20
-        #self.x = pos_x +20
-        #self.y = pos_y +20
         self.angle = angle
 
     def update(self):

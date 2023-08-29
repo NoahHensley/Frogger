@@ -63,4 +63,4 @@ VECHILE_SKIN_SPRITES = {
     VECHILE_SKINS.PINK: pygame.image.load("Vehicle_skin/Car_pin1.png"),
 }
 
-END_GRASS_SKIN_SPRITE = pygame.image.load("Grass/EndGrass_Sample1.png")
+END_GRASS_SKIN_SPRITE = pygame.image.load("Grass/EndGrass_Sample2.png")

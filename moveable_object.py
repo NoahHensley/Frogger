@@ -1,20 +1,20 @@
 import pygame
 from pygame.math import Vector2
+from decimal import Decimal
 #-**import pygame
 from constants import SQUARE_SIZE, FPS, LOG_SKIN_SPRITES, LOG_SKINS, VECHILE_SKIN_SPRITES, VECHILE_SKINS, DEBUG_TOGGLE, LEFT, RIGHT
 """
 File for the classes: Vehicle, Jogger, Log, Turtle 
 """
 
-
 # [(X, Y), Amount In Group , Direction, Speed, Sprite, Time difference between spawns, Time for a new group to spawn]
 VEHICLES = [
-  [Vector2(600,640), 3, LEFT, SQUARE_SIZE * .04,VECHILE_SKINS.BASIC_1, 4 * FPS, 6 * FPS], # race_car1
-  [Vector2(-40,600), 3, RIGHT, SQUARE_SIZE * .03,VECHILE_SKINS.TRACTOR, 4 * FPS, 8 * FPS], # tractor # 0.02
-  [Vector2(600, 560), 3, LEFT, SQUARE_SIZE * .03,VECHILE_SKINS.SPACESHIP, 4 * FPS, 8 * FPS], # space_ship # 0.019
-  [Vector2(-40,520), 3, RIGHT, SQUARE_SIZE * .08,VECHILE_SKINS.WHITE, 4 * FPS, 8 * FPS], # race_car2 
-  [Vector2(600, 480), 3, LEFT, SQUARE_SIZE * .06,VECHILE_SKINS.BASIC_2, 4 * FPS, 8 * FPS], # truck
-  [Vector2(600, 440), 3, LEFT, SQUARE_SIZE *.03,VECHILE_SKINS.PINK , 4 * FPS, 8 * FPS] 
+  [Vector2(600,640), 3, LEFT, SQUARE_SIZE * 4,VECHILE_SKINS.BASIC_1, 0.7, 2], # race_car1
+  [Vector2(-40,600), 3, RIGHT, SQUARE_SIZE * 3,VECHILE_SKINS.TRACTOR, 0.7, 2], # tractor # 0.02
+  [Vector2(600, 560), 3, LEFT, SQUARE_SIZE * 3,VECHILE_SKINS.SPACESHIP, 0.7, 2], # space_ship # 0.019
+  [Vector2(-40,520), 3, RIGHT, SQUARE_SIZE * 8,VECHILE_SKINS.WHITE, 0.7, 2], # race_car2 
+  [Vector2(600, 480), 3, LEFT, SQUARE_SIZE * 6,VECHILE_SKINS.BASIC_2, 0.7, 2], # truck
+  [Vector2(600, 440), 3, LEFT, SQUARE_SIZE * 3,VECHILE_SKINS.PINK , 0.7, 2] 
   # normal_car
 ]
 # list size 5 including 0
@@ -28,17 +28,17 @@ Lane 2 is log - group
 Lane 1 is turtle 
 """
 LOGS = [
-  [Vector2(-40, 280), 2, RIGHT, SQUARE_SIZE * .05,LOG_SKINS.BASIC, 0, 5 * FPS], # space_ship # 0.019
-  [Vector2(-40, 240), 1, RIGHT, SQUARE_SIZE * .03,LOG_SKINS.BASIC, 0, 6 * FPS], # race_car2 
-  [Vector2(-40, 160), 1, RIGHT, SQUARE_SIZE * .06,LOG_SKINS.BASIC, 0, 6 * FPS], # truck
-  [Vector2(-40, 80), 3, RIGHT, SQUARE_SIZE *.03, LOG_SKINS.BASIC, 4 * FPS, 8 * FPS] # normal_car
+  [Vector2(-40, 280), 2, RIGHT, SQUARE_SIZE * 6,LOG_SKINS.BASIC, 0.7, 3],
+  [Vector2(-40, 240), 1, RIGHT, SQUARE_SIZE * 4,LOG_SKINS.BASIC, 0, 2], 
+  [Vector2(-40, 160), 1, RIGHT, SQUARE_SIZE * 6,LOG_SKINS.BASIC, 0, 4], 
+  [Vector2(-40, 80), 3, RIGHT, SQUARE_SIZE * 6, LOG_SKINS.BASIC, 0.7, 5] 
 ]
 #list size three including 0
 
 TURTLES = [
-  [Vector2(600,320), 3, LEFT, SQUARE_SIZE * .06, pygame.image.load("Turtle/Turtle_sample.png"), .3 * FPS, 2* FPS], #turtle lane 1
-  [Vector2(600,200), 3, LEFT, SQUARE_SIZE * .03, pygame.image.load("Turtle/Turtle_sample.png"), .3 * FPS, 2.5 * FPS], #turtle lane 2
-  [Vector2(600, 120), 3, LEFT, SQUARE_SIZE * .03, pygame.image.load("Turtle/Turtle_sample.png"),  .3 * FPS, 3 * FPS], #turtle lane 1
+  [Vector2(600,320), 3, LEFT, SQUARE_SIZE * 3, pygame.image.load("Turtle/Turtle_sample.png"), 0.35, 2.5], #turtle lane 1
+  [Vector2(600,200), 3, LEFT, SQUARE_SIZE * 4, pygame.image.load("Turtle/Turtle_sample.png"), 0.25, 2], #turtle lane 2
+  [Vector2(600, 120), 3, LEFT, SQUARE_SIZE * 6, pygame.image.load("Turtle/Turtle_sample.png"), 0.15, 2], #turtle lane 1
 #list size 2 including 0 
 ]
 
@@ -65,6 +65,8 @@ class MovingObject(pygame.sprite.Sprite):
         self.rect.x = pos[0]
         self.rect.y = pos[1]
 
+        self.position = Vector2(Decimal(pos[0]), Decimal(pos[1]))
+
         # Direction it should be moving
         self.direction = properties[2]
 
@@ -74,13 +76,14 @@ class MovingObject(pygame.sprite.Sprite):
         # Lane its present in
         self.lane_num = lane_num
 
-    def movement(self):
+    def movement(self, deltaTime):
         direction = 1 if self.direction else -1
-        self.rect.x += self.speed * direction
-
+        self.position.x += self.speed * direction * deltaTime
         if DEBUG_TOGGLE and (self.lane_num == 1 or self.lane_num == 2):
-            print("Coords: " + str(self.rect.x) + ", " + str(self.rect.y))
+            print("Coords: " + str(self.position.x) + ", " + str(self.position.y))
             print("Speed: " + str(self.speed))
+        
+        self.rect.x = round(self.position.x)
 
     def draw(self, screen):
         screen.blit(self.image, (self.rect.x, self.rect.y))
@@ -119,7 +122,7 @@ class Turtle(MovingObject):
 
     # At some point we need to add the other parts to the turtle animation - Moth
     self.image_list = ["Turtle/Turtle_sample.png", "Turtle/Turtle_sample.png", "Turtle/Turtle_sample.png"]
-    self.image = pygame.image.load(self.image_list[self.current_anim])
+    self.image = turtle_properties[4]
     self.rect = self.image.get_rect()
 
     super().__init__(TURTLES[lane_num], lane_num)

@@ -194,7 +194,7 @@ class EndGrass(pygame.sprite.Sprite): #create sprite
             self.rect)"""
       
     def test_collision(self, frog_object):
-      return self.hitbox.colliderect(frog_object)
+      return self.hitbox.colliderect(frog_object.rect)
       
 
 class Sidewalk:
@@ -212,11 +212,37 @@ class Sidewalk:
                         SQUARE_SIZE))
 
 class Frog(pygame.sprite.Sprite):
-    def __init__(self, x_input, y_input):
+    def __init__(self, color_input, x_input, y_input):
       super().__init__()
       self.x = x_input;
       self.y = y_input;
-      self.image = pygame.image.load("Frogger_main_skin/skin_BlueFrog_base.png")
+      self.color = color_input
+      # This can probably be optimized/better organized
+      if self.color == "purple":
+        self.image = pygame.image.load("Frogger_main_skin/skin_BlueFrog_base.png")
+      elif self.color == "green":
+        self.image = pygame.image.load("Frogger_main_skin/skin_Classic_base.png")
+        self.image = pygame.transform.flip(self.image, True, True).convert_alpha()
 
+      self.rotating = True
+      self.counter = 0
+      
+
+  #make a 
+  
+#make a loop where it rotates the frog left and then bottom
+  
     def draw(self, screen):
-        screen.blit(self.image, (self.x, self.y))
+      """if self.rotating == True:
+        
+        if self.counter == 50:
+        self.image = pygame.transform.rotate(self.image, 90)
+        elif self.counter == 100
+        self.image = pygame.transform.rotate(self.image, 180)
+        elif self.counter > 100
+        self.rotating = False
+        """
+
+      
+        
+      screen.blit(self.image, (self.x, self.y))  

@@ -1,5 +1,20 @@
+"""
+
+Frogger
+Developed by the Computer Science Club of Crafton Hills College
+Developed in Spring 2022 & Spring 2023
+An iteration of the arcade game "Frogger"
+
+Game Designers: Angel Galindo, Noah Hensley, Joseph Godizen, Kyonosuke Watanabe
+Lead Game Programmer: Noah Hensley
+Game Programmers: Angel Galindo, Measured Moth, Jakob Barringer, Joseph Godinez, Adrian Toquero
+Graphic Designer: Angel Galindo
+
+"""
+
+
 #----------------------------------
-import pygame  # Pygame is used for any function that affects the GUI(display)
+import pygame, time  # Pygame is used for any function that affects the GUI(display)
 
 from frogger import Frogger  # Importing different classes from different files
 """
@@ -24,7 +39,7 @@ from text import TimerText
 from text import LivesText
 from text import NormalScoreText
 
-from constants import FPS, WATER_X, WATER_Y, WIDTH, HEIGHT, GAME_SQUARE_HEIGHT, GAME_SQUARE_WIDTH, SQUARE_SIZE
+from constants import FPS, WATER_X, WATER_Y, WIDTH, HEIGHT, GAME_SQUARE_HEIGHT, GAME_SQUARE_WIDTH, SQUARE_SIZE, DEBUG_TOGGLE
 import time
 import random
 
@@ -88,6 +103,7 @@ previous_time = time.time()
 # Variables for the timer bar
 beginning_time = time.time()
 game_over_time = 90 # 1 minute 30 seconds
+# game_over_time = 10 # For testing purposes
 
 """
 Key for 2D MAP list:
@@ -145,6 +161,17 @@ highScore = []
 normalScore = []
 lifeTracker = []
 
+def lose_life():
+  if len(frogs.sprites()) > 0:
+    frogs_sprites_list = frogs.sprites()
+    frogs_sprites_list.pop(len(frogs.sprites())-1)
+    frogs.empty()
+    frogs.add(*frogs_sprites_list)
+
+def show_gameover():
+  
+  print("ITSSSSS")
+  
 # Looping through map & putting each element from the 2D list into their respective lists
 for row_num in range(len(MAP)):  # row
     for tile_num in range(GAME_SQUARE_WIDTH):  # column
@@ -180,7 +207,7 @@ for row_num in range(len(MAP)):  # row
 # have spawned in the group, and a "phase" string that determines whether or not the lane will spawn a vehicle, wait to spawn another vehicle, or wait to spawn another group of 3 vehicles
 lane_properties = []
 for a in range(LANES): # LANES is a constant (6)
-  lane_properties.append([0, 0, "group_separation"])
+  lane_properties.append([0.0, 0, "group_separation"])
   
 # Elements: counter, cars_spawned, phase
 # Phases: spawn, car_separation, group_separation
@@ -213,12 +240,14 @@ object_type = []
 death_counter = 0
 counterr = 0
 random_number = 0
+timeAtLastFrame = time.time()
 rainy_day = False
 # Main game loop
 in_game = True
-
+game_over = False
 # Randomizes whether or not there will be rain
 rand_num = random.randint(1,3)
+delta_time = 0
 print(rand_num)
 
 if (1 <= rand_num <= 3):
@@ -226,22 +255,23 @@ if (1 <= rand_num <= 3):
 
 frog_gap = 44
 for x in range(0, frog_gap*3, frog_gap):
-  frogs.add(Frog(x,760))
+  frogs.add(Frog("purple", x,760))
 
 x_endgrasses = 80
 for x in range(0, x_endgrasses*10,x_endgrasses):
   grasses.add(EndGrass(x,40))
-  
+
+clock.tick(FPS)
+
 while in_game:
   # Fresh canvas
   screen.fill(BACKGROUND_COLOR)  # Draws background
   vehicles_lane_num = 0
   logs_lane_num = 0
   turtles_lane_num = 0
-  # Spawning code begins
-
-  dt = time.time() - previous_time
-  previous_time = time.time()
+  # Spawning code begins    
+  # In miliseconds
+  
   
   for lane_num in range(len(lane_properties)): # Goes through each lane
     
@@ -264,22 +294,9 @@ while in_game:
       object_type = LOGS
       lane_num_type = logs_lane_num
       type = "logs"
-      
-    if lane_properties[lane_num][2] == "spawn": # If the "phase" of the lane is to spawn a vehicle
-      # Creates the moving object
-      if lane_num < 6:
-        vehicles.add(Vehicle(lane_num_type))# Creates the vehicle
-        #print("What are you doing with fluffy")
-      elif lane_num == 7 or lane_num == 10 or lane_num == 12:
-        ##print(lane_num_type)
-        turtles.add(Turtle(lane_num_type))
-        #print("Dr Maxis we are successful")
-      elif lane_num == 8 or lane_num == 9 or lane_num == 11 or lane_num == 13:
-       logs.add(Log(lane_num_type))
-       #print("The test subjects have survived telportation")
-      # End
 
-      """
+
+    """
       Assignment of the type based on the lane requires the use of a variable object_group to make the access of the type of list dynamic making the clock universal for all vehicles, turtles and logs
       lane_num_type at the bottom of the code has to be dependent on the type of moeveable object i.e(vehicle, log, and turtle)
       If its vehicle the new lane_num_type would be from 0 to 5
@@ -303,24 +320,34 @@ while in_game:
       Update: The clock is finished and is now considered universal as shown in the console output. The structure of the clock can now incorporate the jogger and the purple frog considering the list is similar to an extent. The purple frog will require considerations with possibly creating a list for each water lane 
       Update: The collision works also with the water lane object types. There is also a weird slowing down as vehicles,logs and turtles reach x coordinate zero. I suspect it might be a rounding issue?  -A.R.A
       """
-
-        
     
+    if lane_properties[lane_num][2] == "spawn": # If the "phase" of the lane is to spawn a vehicle
+      # Creates the moving object
+      if lane_num < 6:
+        vehicles.add(Vehicle(lane_num_type))# Creates the vehicle
+        #print("What are you doing with fluffy")
+      elif lane_num == 7 or lane_num == 10 or lane_num == 12:
+        ##print(lane_num_type)
+        turtles.add(Turtle(lane_num_type))
+        #print("Dr Maxis we are successful")
+      elif lane_num == 8 or lane_num == 9 or lane_num == 11 or lane_num == 13:
+       logs.add(Log(lane_num_type))
+       #print("The test subjects have survived telportation")
 
       lane_properties[lane_num][1] += 1 # Increments the variable that stores number of cars that have spawned in group
-      if lane_properties[lane_num][1] >= object_type[lane_num_type][1]: # If the number of cars that have spawned in group is greater than or equal to 3...
-        lane_properties[lane_num][1] = 0 # Resets variables that stores number of cars in a group
-        lane_properties[lane_num][2] = "group_separation" # Goes to phase where lane waits for 6 seconds for separation between car groups
+      if lane_properties[lane_num][1] >= object_type[lane_num_type][1]: # If the number of sprites is greater or equal to the max in group
+        lane_properties[lane_num][1] = 0 # Resets variables that stores number of sprites in a group
+        lane_properties[lane_num][2] = "group_separation" # Goes to phase where lane waits for a time between groups
       else: # If the number of cars that have spawned is less than 3
         lane_properties[lane_num][2] = "car_separation" # Goes to phase where lane waits for 2 seconds for separation between cars in group
     elif lane_properties[lane_num][2] == "car_separation": # If the "phase" of the lane is waiting between cars in a car group
-      lane_properties[lane_num][0] += 1 # Increments counter
+      lane_properties[lane_num][0] += delta_time # Increments counter
       #print("Subject is within the test chamber activate power")
       if lane_properties[lane_num][0] >= object_type[lane_num_type][5]: # If 2 seconds have passed...
         lane_properties[lane_num][0] = 0 # Resets counter
         lane_properties[lane_num][2] = "spawn" # Goes to phase where the lane spawns a vehicle
     elif lane_properties[lane_num][2] == "group_separation": # If the "phase" of the lane is waiting between car groups
-      lane_properties[lane_num][0] += 1 # Increments counter
+      lane_properties[lane_num][0] += delta_time # Increments counter
 
       if lane_properties[lane_num][0] >= object_type[lane_num_type][6]: # If 6 seconds have passed...
         lane_properties[lane_num][0] = 0 # Resets counter
@@ -348,15 +375,13 @@ while in_game:
           
   
   # Spawning code ends
-        
-
+  
   # A bunch of code
   #print("Bring me another")
   #print(lane_properties)
-  
-  frog_object.movement()  # Takes in keyboard input for the frog
 
-  
+  frog_object.movement(game_over, delta_time)  # Takes in keyboard input for the frog
+
   if (frog_object.bullets):
     bullets.add(frog_object.bullet)
     # bullets.add(Bullet(frog_object.rect.x, frog_object.rect.y, frog_object.angle))
@@ -364,13 +389,15 @@ while in_game:
     #bullet = frog_object.create_bullet()
     #bullets.add(bullet)
 
-  #
+  # Code for spawning rain
   random_number = random.randint(1,2)
   random_number_x = random.randint(0, 1200) # Original upper bound: 720
   
   if (random_number == 1  and rainy_day):
     droplets.add(Rain(random_number_x, 20))
+    
   
+  # Drawing all moving objects
   for water in waters:  # Draws the water
     water.draw(screen)
   for sidewalk_ind in sidewalk:  # Draws the sidewalks
@@ -382,19 +409,19 @@ while in_game:
   for vehicle in vehicles:
     if vehicle.rect.x < -90 or vehicle.rect.x > 650 :
        vehicle.kill()
-    vehicle.movement()
+    vehicle.movement(delta_time)
     pygame.sprite.groupcollide(bullets, vehicles, True, True)
     vehicle.draw(screen)
   for turtle in turtles:
     if turtle.rect.x < -90 or turtle.rect.x > 650:
        turtle.kill()
-    turtle.movement()
+    turtle.movement(delta_time)
     pygame.sprite.groupcollide(bullets, turtles, True, True)
     turtle.draw(screen)
   for log in logs:
     if log.rect.x < -90 or log.rect.x > 650:
        log.kill()
-    log.movement()
+    log.movement(delta_time)
     pygame.sprite.groupcollide(bullets, logs, True, True)
     log.draw(screen)
 
@@ -409,14 +436,12 @@ while in_game:
       
       rain.update()
       rain.draw(screen) 
-  for Frog in frogs:
-    Frog.draw(screen)
   for Endgrass in grasses:
     Endgrass.draw(screen)
+  for individual_frog in frogs:
+    individual_frog.draw(screen)
 
-  
-
-  frog_object.draw(screen)# Draws the frog overlaps the background and the cars
+  if not game_over: frog_object.draw(screen)# Draws the frog overlaps the background and the cars
 
   if (counterr == 100):
     #print(bullets)
@@ -429,13 +454,27 @@ while in_game:
   for Endgrass in grasses:
     end_collided = Endgrass.test_collision(frog_object)
     if end_collided:
+      # This variable keeps track of which endgrass the Frogger collided with
+      end_grass_collided_with = Endgrass
       break
     else:
       frog_object.at_end = False
   if end_collided:
-    # We'll write level completion code here later
-    print("You've beaten the game!!!!" + str(random.randint(0, 99)))
-    frog_object.at_end = True
+    # The frog_object.at_end variable may be unused
+    
+    # Resets the time
+    beginning_time = time.time()
+    # Makes the bar green again
+    timer.color = timer.green_color
+
+    # Resets the Frogger's position when it completes the level
+    #frog_object.rect.x = 7 * SQUARE_SIZE  # 7 tiles from the left of the screen
+    #frog_object.rect.y = HEIGHT - SQUARE_SIZE * 2  # 2 tiles from the bottom of the screen
+    frog_object.death_reset()
+
+    # Places a pseudo-frog where the Frogger collided with the end grass
+    frogs.add(Frog("green", end_grass_collided_with.hitbox.x - 10, end_grass_collided_with.hitbox.y - 10))
+    
   
  # print(Droplets)
   """I have implemented three total functions here. 
@@ -444,11 +483,15 @@ while in_game:
   This spritecollideany is meant to check if there is a collision between the frog and vehicle, if there is, a death counter is incremented where soon after the death_counter would reach 10 and it would call the frog_object.death_reset() function which spawns the frog to the beginning of the map. -A.G
   
   Update: I will plan to implement these in the frogger class to keep the main more tidy. With this in mind, I believe we should also think about reallocating the universal timer to its own specified class but its not neccessary. Also the implementation of the run-over animation should be done when the death_counter ticker is reached. Also lives should be implemented to decrease everytime a death happens- A.R.A"""
-  frog_object.collision_detection(pygame.sprite.Group(turtles.sprites() + logs.sprites()), dt)
+  frog_object.collision_detection(pygame.sprite.Group(turtles.sprites() + logs.sprites()), delta_time)
+    
 
   if frog_object.drowning():
     frog_object.kill()
-    Frog.kill()
+    death_counter +=5
+    print("Hey you dieeed")
+    
+    # Frog.kill()
 
   
   #if (pygame.sprite.spritecollideany(frog_object, logs)):
@@ -463,12 +506,37 @@ while in_game:
   
   """
 
-  if (death_counter == 5):
+  if (death_counter >= 5):
+    lose_life()
+    print("YOUHHHHHHHHHHHHHHHHHHHHHHHHHH DIED")
+    
+    # Resets the time
+    beginning_time = time.time()
+
+    # Kills Frogger
     frog_object.death_reset()
-    Frog.kill()
+    frog_object.kill()
     death_counter = 0
 
+  if (len(frogs.sprites()) <= 0):
+    game_over = True
+    my_font2 = pygame.font.SysFont('Comic Sans MS', 50)
+    gameover_text = "GAME OVER"
+    gameover_text_surface = my_font2.render(gameover_text, False, (255, 255, 255))
+    screen.blit(gameover_text_surface, (WIDTH/2 - 100, HEIGHT/2 ))
+    frog_object.kill()
+
   
+      
+
+
+
+ 
+  """ 
+  pop up game over screen while the cars and vehicles continue playing. Until you pick a option(play again      or quit itll have two options)
+  """
+
+    
   #pygame.sprite.groupcollide(bullets, vehicles, True, True)
   #blocks_hit_list = pygame.sprite.spritecollide(frog_object, vehicles, True)
   #f pygame.sprite.spritecollide
@@ -490,22 +558,6 @@ while in_game:
     print()
     list_display_counter = 0
   """
-  
-  fpslist.append(clock.get_fps())
-  clockfps+=1
-  if clockfps == 70*17 :
-    clockfps = 0
-    while(listcounter < len(fpslist)):
-      total = total + fpslist[listcounter]
-      listcounter += 1
-    print(total/len(fpslist))
-    fpslist = []
-    print()
-    
-
-    
-
-
     
   # Draws the coordinates of frog
   my_font = pygame.font.SysFont('Comic Sans MS', 30)
@@ -517,12 +569,34 @@ while in_game:
   fps_text_surface = my_font.render(fps_text, False, (255, 255, 255))
   screen.blit(fps_text_surface, (WIDTH - 300, 0))
 
+  #Draws time
+  time_text = "TIME"
+  time_font = pygame.font.SysFont('Comic Sans MS', 30)
+  time_text_surface = time_font.render(time_text, False, (255, 255, 255))
+  screen.blit(time_text_surface, (268, 757))
   
   # Testing - draws car sample next to Frogger
   #screen.blit(car_sample, (210, 440))
   current_time = time.time()
-  timer.draw(screen, 1 - ((current_time - beginning_time) / game_over_time))
+  percentage_time = 1 - ((current_time - beginning_time) / game_over_time)
+  timer.draw(screen, percentage_time)
+
+  # Code for killing the Frogger when the timer runs out
+  if timer.times_up(percentage_time):
+    # Resets the time
+    beginning_time = time.time()
+    # Makes the bar green again
+    timer.color = timer.green_color
+    
+    lose_life()
+    print("YOUHHHHHHHHHHHHHHHHHHHHHHHHHH DIED")
+    frog_object.death_reset()
+    frog_object.kill()
+    death_counter = 0
+  
   clock.tick(64)
+
+  delta_time = clock.tick(FPS) / 1000.0
   
   pygame.display.flip()  # Not sure what it does, makes display work
 
